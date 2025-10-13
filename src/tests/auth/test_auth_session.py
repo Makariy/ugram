@@ -30,6 +30,7 @@ async def test_data(db_session: AsyncSession):
 
     repo = UserRepository(db_session)
     user = await repo.create_user(username, password)
+    assert user is not None 
 
     yield CaseData(username=username, password=password, repo=repo, user=user)
 
@@ -95,4 +96,22 @@ async def test_logout_not_logged_user(cache_connection: Redis):
     assert not result
     user_uuid = await get_user_uuid_by_token(cache_connection, token)
     assert user_uuid is None
+
+
+async def test_logout_by_uuid(cache_connection: Redis, test_data: CaseData):
+    token = await authorize_user(cache_connection, test_data.user)
+    assert token
+
+    result = await logout_user_by_uuid(cache_connection, str(test_data.user.uuid))
+    assert result 
+
+    user_uuid = await get_user_uuid_by_token(cache_connection, token)
+    assert user_uuid is None 
+
+
+async def test_logout_by_uuid_not_logged_user(cache_connection: Redis, test_data: CaseData):
+    result = await logout_user_by_uuid(cache_connection, str(test_data.user.uuid))
+    assert not result 
+
+    
 

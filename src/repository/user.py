@@ -33,10 +33,9 @@ class UserRepository:
 
             user = User(username=username, password_hash=hash_user_password(password))
             self._session.add(user)
-            await self._session.commit()
 
-        await self._session.refresh(user)
-        return user
+            await self._session.flush()
+            return user
 
     async def delete_user_by_uuid(self, str_uuid: str) -> None:
         uuid = UUID(str_uuid)
@@ -47,3 +46,4 @@ class UserRepository:
             )
 
         return
+
