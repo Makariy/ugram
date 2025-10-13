@@ -1,3 +1,4 @@
+from cache.deps import CacheConnectionDep
 from auth.deps import GetCurrentUserDep
 from db import DBSessionDep
 from models.user import User
@@ -11,7 +12,6 @@ from repository.user import UserRepository
 from fastapi import Response, Request, HTTPException, status
 from pydantic import BaseModel
 
-from cache.connection import ConnectionManager
 from forms.user import UserLoginForm, UserRegistrationForm, UserForm
 from auth.services.request import AUTH_COOKIE_TOKEN_KEY
 
@@ -42,6 +42,7 @@ async def _add_cookie_and_return_response(
 
 async def handle_login(
     async_session: DBSessionDep,
+    cache_connection: CacheConnectionDep,
     response: Response,
     form: UserLoginForm,
 ):
@@ -54,13 +55,13 @@ async def handle_login(
             detail="Incorrect username or password",
         )
 
-    conn = await ConnectionManager.get_connection()
-    token = await authorize_user(conn, user)
+    token = await authorize_user(cache_connection, user)
     return await _add_cookie_and_return_response(user, token, response)
 
 
 async def handle_registration(
     async_session: DBSessionDep,
+    cache_connection: CacheConnectionDep,
     response: Response,
     form: UserRegistrationForm,
 ):
@@ -73,7 +74,7 @@ async def handle_registration(
             detail="A user with this username already exists"
         )
 
-    token = await authorize_user(await ConnectionManager.get_connection(), user)
+    token = await authorize_user(cache_connection, user)
     return await _add_cookie_and_return_response(user, token, response)
 
 
@@ -88,6 +89,7 @@ async def handle_me(
 
 
 async def handle_logout(
+    cache_connection: CacheConnectionDep,
     response: Response,
     request: Request
 ):
@@ -98,7 +100,7 @@ async def handle_logout(
             detail="No session token is set"
         )
 
-    result = await logout_user_by_token(await ConnectionManager.get_connection(), token)
+    result = await logout_user_by_token(cache_connection, token)
     response.delete_cookie(AUTH_COOKIE_TOKEN_KEY, httponly=True)
 
     return LogoutResponse(was_logged=result)

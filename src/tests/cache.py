@@ -1,8 +1,11 @@
+from cache.deps import cache_connection_dep
+from app import app
+from cache.connection import close_connection
+from cache.connection import create_connection
 from config.config import REDIS_DB
 from config.config import REDIS_PASS
 from config.config import REDIS_PORT
 from config.config import REDIS_HOST
-from cache.connection import ConnectionManager
 import pytest_asyncio
 
 
@@ -10,15 +13,15 @@ import pytest_asyncio
 async def cache_connection():
     assert REDIS_HOST is not None 
     assert REDIS_PORT is not None 
-    await ConnectionManager.connect(
+    conn = await create_connection(
         REDIS_HOST,
         int(REDIS_PORT),
         REDIS_PASS,
         REDIS_DB + 1
     )
 
-    conn = await ConnectionManager.get_connection()
+    app.dependency_overrides[cache_connection_dep] = lambda: conn
     yield conn
 
-    await ConnectionManager.close()
+    await close_connection(conn)
 
