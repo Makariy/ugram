@@ -13,4 +13,8 @@ class Base(DeclarativeBase):
             for col in self.__table__.columns
         )
 
+    def __hash__(self) -> int:
+        return sum(
+            (hash(getattr(self, col.key)) for col in self.__table__.columns)
+        )
 
