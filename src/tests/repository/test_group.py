@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from uuid import uuid4
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -155,4 +156,60 @@ async def test_delete_group(test_data: CaseData):
 async def test_delete_not_existing_group(test_data: CaseData):
     with pytest.raises(GroupDeleteException):
         await test_data.repo.delete_group(str(test_data.user.uuid))
+
+
+async def test_get_group_by_uuid(test_data: CaseData):
+    group = await test_data.repo.create_group(
+        str(test_data.user.uuid),
+        test_data.group_name,
+        test_data.group_description,
+    )
+    retrieved_group = await test_data.repo.get_group_by_uuid(str(group.uuid))
+    assert group == retrieved_group
+
+
+async def test_get_group_by_uuid_doesnt_exist(test_data: CaseData):
+    group = await test_data.repo.get_group_by_uuid(str(uuid4()))
+    assert group is None 
+
+
+async def test_get_group_with_user_role(test_data: CaseData):
+    group = await test_data.repo.create_group(
+        str(test_data.user.uuid),
+        test_data.group_name,
+        test_data.group_description,
+    )
+    group_with_role = await test_data.repo.get_group_with_user_role(
+        str(group.uuid),
+        str(test_data.user.uuid)
+    )
+
+    assert group_with_role is not None 
+    retrieved_group, role = group_with_role
+
+    assert group == retrieved_group 
+    assert role == GroupRole.ADMIN
+
+
+async def test_get_group_with_user_role_group_not_exists(test_data: CaseData):
+    group_with_role = await test_data.repo.get_group_with_user_role(
+        str(uuid4()),
+        str(test_data.user.uuid)
+    )
+
+    assert group_with_role is None 
+
+
+async def test_get_group_with_user_role_user_not_exists(test_data: CaseData):
+    group = await test_data.repo.create_group(
+        str(test_data.user.uuid),
+        test_data.group_name,
+        test_data.group_description,
+    )
+    group_with_role = await test_data.repo.get_group_with_user_role(
+        str(group.uuid),
+        str(uuid4())
+    )
+
+    assert group_with_role is None 
 

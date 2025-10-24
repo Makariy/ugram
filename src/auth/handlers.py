@@ -1,5 +1,6 @@
+from auth.services.forms import user_model_to_user_form
 from cache.deps import CacheConnectionDep
-from auth.deps import GetCurrentUserDep
+from auth.deps import CurrentUserDep
 from db import DBSessionDep
 from models.user import User
 from auth.services.session import (
@@ -33,10 +34,7 @@ async def _add_cookie_and_return_response(
         httponly=True,
     )
     return LoginResponse(
-        user=UserForm(
-            username=user.username,
-            uuid=str(user.uuid)
-        )
+        user=await user_model_to_user_form(user)
     )
 
 
@@ -45,7 +43,7 @@ async def handle_login(
     cache_connection: CacheConnectionDep,
     response: Response,
     form: UserLoginForm,
-):
+) -> LoginResponse:
     async with async_session() as session:
         user = await authenticate_user(session, form.username, form.password)
 
@@ -64,7 +62,7 @@ async def handle_registration(
     cache_connection: CacheConnectionDep,
     response: Response,
     form: UserRegistrationForm,
-):
+) -> LoginResponse:
     async with async_session() as session:
         user = await UserRepository(session).create_user(form.username, form.password)
 
@@ -80,12 +78,9 @@ async def handle_registration(
 
 async def handle_me(
     async_session: DBSessionDep,
-    user: GetCurrentUserDep
+    user: CurrentUserDep
 ):
-    return UserForm(
-        username=user.username,
-        uuid=str(user.uuid)
-    )
+    return await user_model_to_user_form(user)
 
 
 async def handle_logout(

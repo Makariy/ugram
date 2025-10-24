@@ -12,6 +12,7 @@ from auth.services.bearer import session_auth_scheme
 from models.user import User
 
 
+
 async def get_current_user(
     async_session: DBSessionDep,
     cache_connection: CacheConnectionDep,
@@ -29,5 +30,5 @@ async def get_current_user(
         return await get_user_by_token(session, cache_connection, token)
 
 
-GetCurrentUserDep = Annotated[User, Depends(get_current_user)]
+CurrentUserDep = Annotated[User, Depends(get_current_user)]
 

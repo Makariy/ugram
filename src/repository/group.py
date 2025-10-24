@@ -17,6 +17,34 @@ class GroupRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
+    async def get_group_by_uuid(self, uuid: str) -> Group | None:
+        result = await self._session.execute(
+            select(Group). 
+                where(Group.uuid == UUID(uuid))
+        )
+        return result.scalar_one_or_none()
+
+    async def get_group_with_user_role(
+        self,
+        group_uuid: str,
+        user_uuid: str
+    ) -> tuple[Group, GroupRole] | None:
+        result = await self._session.execute(
+            select(Group, GroupToUser). 
+                join(
+                    GroupToUser,
+                    (GroupToUser.user_uuid == UUID(user_uuid)) & 
+                    (GroupToUser.group_uuid == group_uuid)
+                )
+        )
+        
+        group_with_role = result.first()
+        if not group_with_role:
+            return None 
+
+        group, group_role = group_with_role
+        return group, GroupRole(group_role.role)
+
     async def get_user_groups_by_user_uuid(
         self,
         uuid: str 

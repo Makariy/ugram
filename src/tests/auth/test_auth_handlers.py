@@ -120,7 +120,6 @@ async def test_me(
     token = response.cookies.get(AUTH_COOKIE_TOKEN_KEY)
     assert token is not None 
 
-    http_client.cookies.set(AUTH_COOKIE_TOKEN_KEY, token)
     response = await http_client.get("/auth/me")
 
     data = response.json()
@@ -151,9 +150,11 @@ async def test_logout(
     token = response.cookies.get(AUTH_COOKIE_TOKEN_KEY)
     assert token is not None 
 
-    http_client.cookies.set(AUTH_COOKIE_TOKEN_KEY, token)
     response = await http_client.post("/auth/logout")
     assert response.status_code == 200 
+
+    data = response.json()
+    assert data.get("was_logged") 
 
 
 
