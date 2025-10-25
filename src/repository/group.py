@@ -33,9 +33,11 @@ class GroupRepository:
             select(Group, GroupToUser). 
                 join(
                     GroupToUser,
-                    (GroupToUser.user_uuid == UUID(user_uuid)) & 
-                    (GroupToUser.group_uuid == group_uuid)
-                )
+                    (GroupToUser.group_uuid == Group.uuid) &
+                    (GroupToUser.user_uuid == UUID(user_uuid)) 
+                ). 
+                where(Group.uuid == UUID(group_uuid)). 
+                where(GroupToUser.user_uuid == UUID(user_uuid))
         )
         
         group_with_role = result.first()

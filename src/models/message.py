@@ -8,6 +8,7 @@ from .user import User
 from .group import Group
 
 
+# TODO: add message type (text_only, text_with_attachments, attachments_only, audio, sticker)
 class Message(Base):
     __tablename__ = "messages"
 
@@ -48,6 +49,11 @@ class Message(Base):
     group = relationship(
         Group,
         foreign_keys=[group_uuid]
+    )
+    resources = relationship(
+        "MessageResource",
+        back_populates="message",
+        lazy="selectin"
     )
     
 
