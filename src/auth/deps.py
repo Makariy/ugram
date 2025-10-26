@@ -1,3 +1,4 @@
+from auth.exceptions import NoActiveSessionException
 from cache.deps import CacheConnectionDep
 from db import DBSessionDep
 from auth.services.request import get_user_by_token
@@ -21,13 +22,19 @@ async def get_current_user(
     if auth_data is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
+            detail="No auth data is provided",
         )
         
     token = auth_data.credentials
 
     async with async_session() as session:
-        return await get_user_by_token(session, cache_connection, token)
+        try:
+            return await get_user_by_token(session, cache_connection, token)
+        except NoActiveSessionException:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You have no active session"
+            )
 
 
 CurrentUserDep = Annotated[User, Depends(get_current_user)]

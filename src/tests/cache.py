@@ -21,7 +21,8 @@ async def cache_connection():
     )
 
     app.dependency_overrides[cache_connection_dep] = lambda: conn
-    yield conn
-
-    await close_connection(conn)
+    try:
+        yield conn
+    finally:
+        await close_connection(conn)
 

@@ -15,4 +15,9 @@ REDIS_PORT = os.environ.get("REDIS_PORT")
 REDIS_PASS = os.environ.get("REDIS_PASS")
 REDIS_DB = 0
 
+WEBSOCKET_HOST = os.environ.get("WEBSOCKET_HOST")
+WEBSOCKET_PORT = os.environ.get("WEBSOCKET_PORT")
+
+KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
+KAFKA_GROUP_ID = "messenger"
 

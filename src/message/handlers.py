@@ -1,23 +1,26 @@
 import datetime
 
-from fastapi.responses import Response 
 from fastapi.exceptions import HTTPException
+from fastapi.responses import Response
 
 from auth.deps import CurrentUserDep
 from db import DBSessionDep
 from forms.message import MessageCreateForm, MessageForm, MessagesForm
 from group.deps import GroupWithRoleDep
 from message.forms import message_model_to_form, messages_to_form
+from message.services.producer import send_message_event_to_kafka
 from models.group import GroupRole
+from producer.deps import KafkaProducerDep
 from repository.message import MessageRepository
 
 
 async def handle_send_message(
     async_session: DBSessionDep,
+    kafka_producer: KafkaProducerDep,
     user: CurrentUserDep,
     group_with_role: GroupWithRoleDep,
-    message_form: MessageCreateForm,
-    response: Response
+    message_create_form: MessageCreateForm,
+    response: Response,
 ) -> MessageForm:
     group, role = group_with_role
     if role == GroupRole.MEMBER_READ_ONLY:
@@ -31,12 +34,15 @@ async def handle_send_message(
         message = await repo.create_message(
             sender_uuid=str(user.uuid),
             group_uuid=str(group.uuid),
-            text=message_form.text,
-            resources=message_form.resources
+            text=message_create_form.text,
+            resources=message_create_form.resources
         )
 
+
+    message_form = await message_model_to_form(message)
+    await send_message_event_to_kafka(kafka_producer, message_form)
     response.status_code = 201
-    return await message_model_to_form(message)
+    return message_form
 
 
 async def handle_get_messages(
