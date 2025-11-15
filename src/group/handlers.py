@@ -1,3 +1,6 @@
+from forms.group import RemoveMembersForm
+from forms.group import GroupMembersToRolesForm
+from group.deps import GroupWithAdminRole
 from fastapi import Response
 
 from auth.deps import CurrentUserDep
@@ -57,4 +60,54 @@ async def get_group_members(
     return await create_group_with_users_form(
         group, user_to_role
     )
+
+
+async def add_members_to_group(
+    async_session: DBSessionDep,
+    group_with_role: GroupWithAdminRole,
+    form: GroupMembersToRolesForm
+):
+    group, _ = group_with_role
+    async with async_session() as session:
+        repo = GroupRepository(session)
+        await repo.add_users_to_group(
+            str(group.uuid), {
+                user_uuid_to_role.uuid: user_uuid_to_role.role for user_uuid_to_role in form.members_to_roles
+            }
+        )
+
+    return await group_model_to_group_form(group)
+
+
+async def change_members_roles(
+    async_session: DBSessionDep,
+    group_with_role: GroupWithAdminRole,
+    form: GroupMembersToRolesForm
+):
+    group, _ = group_with_role
+    async with async_session() as session:
+        repo = GroupRepository(session)
+        await repo.change_users_permissions(
+            str(group.uuid), {
+                user_uuid_to_role.uuid: user_uuid_to_role.role for user_uuid_to_role in form.members_to_roles
+            }
+        )
+
+    return await group_model_to_group_form(group)
+
+
+async def remove_members_from_group(
+    async_session: DBSessionDep,
+    group_with_role: GroupWithAdminRole,
+    form: RemoveMembersForm
+):
+    group, _ = group_with_role
+    async with async_session() as session:
+        repo = GroupRepository(session)
+        await repo.remove_users_from_group(
+            str(group.uuid), form.member_uuids
+        )
+
+    return await group_model_to_group_form(group)
+
 

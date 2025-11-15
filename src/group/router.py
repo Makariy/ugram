@@ -1,3 +1,6 @@
+from group.handlers import change_members_roles
+from group.handlers import remove_members_from_group
+from group.handlers import add_members_to_group
 from group.handlers import get_group_members
 from fastapi.routing import APIRouter
 
@@ -20,4 +23,18 @@ router.add_api_route(
     get_group_members,
     methods=["GET"]
 )
-
+router.add_api_route(
+    "/{group_uuid:str}/add_members",
+    add_members_to_group,
+    methods=["POST"]
+)
+router.add_api_route(
+    "/{group_uuid:str}/remove_members",
+    remove_members_from_group,
+    methods=["POST"]
+)
+router.add_api_route(
+    "/{group_uuid:str}/change_roles",
+    change_members_roles,
+    methods=["POST"]
+)

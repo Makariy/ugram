@@ -30,3 +30,17 @@ class GroupWithUsersForm(BaseModel):
     users: list[UserWithRoleForm]
 
 
+
+class GroupMemberUUIDToRole(BaseModel):
+    uuid: str 
+    role: GroupRole
+
+
+class GroupMembersToRolesForm(BaseModel):
+    members_to_roles: list[GroupMemberUUIDToRole]
+
+
+class RemoveMembersForm(BaseModel):
+    member_uuids: list[str]
+
+

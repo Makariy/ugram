@@ -33,6 +33,19 @@ async def get_group_and_check_access(
     yield group_with_role
 
 
-
 GroupWithRoleDep = Annotated[tuple[Group, GroupRole], Depends(get_group_and_check_access)]
+
+
+async def get_group_and_check_user_is_admin(group_with_role: GroupWithRoleDep):
+    _, role = group_with_role
+    if role != GroupRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Only group admins can access this"
+        )
+    yield group_with_role
+
+
+GroupWithAdminRole = Annotated[tuple[Group, GroupRole], Depends(get_group_and_check_user_is_admin)]
+
 
