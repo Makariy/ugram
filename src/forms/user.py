@@ -16,3 +16,6 @@ class UserForm(BaseModel):
     uuid: str 
 
 
+class UsersListForm(BaseModel):
+    users: list[UserForm]
+

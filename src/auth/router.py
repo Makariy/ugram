@@ -1,3 +1,4 @@
+from auth.handlers import handle_get_all_users
 from auth.handlers import (
     handle_login,
     handle_registration,
@@ -27,5 +28,10 @@ router.add_api_route(
     "/logout",
     handle_logout,
     methods=["POST"]
+)
+router.add_api_route(
+    "/users",
+    handle_get_all_users,
+    methods=["GET"]
 )
 

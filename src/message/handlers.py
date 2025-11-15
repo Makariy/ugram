@@ -47,7 +47,6 @@ async def handle_send_message(
 
 async def handle_get_messages(
     async_session: DBSessionDep,
-    user: CurrentUserDep,
     group_with_role: GroupWithRoleDep,
     last_sending_date: datetime.datetime | None = None 
 ) -> MessagesForm:

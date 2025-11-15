@@ -1,3 +1,5 @@
+from auth.services.forms import users_sequence_to_users_list_form
+from forms.user import UsersListForm
 from auth.services.forms import user_model_to_user_form
 from cache.deps import CacheConnectionDep
 from auth.deps import CurrentUserDep
@@ -77,9 +79,8 @@ async def handle_registration(
 
 
 async def handle_me(
-    async_session: DBSessionDep,
     user: CurrentUserDep
-):
+) -> UserForm:
     return await user_model_to_user_form(user)
 
 
@@ -99,4 +100,14 @@ async def handle_logout(
     response.delete_cookie(AUTH_COOKIE_TOKEN_KEY, httponly=True)
 
     return LogoutResponse(was_logged=result)
+
+
+async def handle_get_all_users(
+    async_session: DBSessionDep
+) -> UsersListForm:
+    async with async_session() as session:
+        users = await UserRepository(session).get_all_users()
+
+    return await users_sequence_to_users_list_form(users)
+
 
