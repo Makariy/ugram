@@ -118,6 +118,41 @@ async def test_add_users_to_group(
     assert first_user_groups[0] == group
     assert second_user_groups[0] == group
 
+    members = await test_data.repo.get_group_members(str(group.uuid))
+    assert members[test_data.first_user] == GroupRole.MEMBER
+    assert members[test_data.second_user] == GroupRole.MEMBER_READ_ONLY
+    return group 
+
+
+async def test_change_users_permissions(
+    test_data: CaseData
+):
+    group = await test_add_users_to_group(test_data)
+    await test_data.repo.change_users_permissions(
+        str(group.uuid),
+        {
+            str(test_data.first_user.uuid): GroupRole.MEMBER_READ_ONLY,
+            str(test_data.second_user.uuid): GroupRole.MEMBER,
+        }
+    )
+    members = await test_data.repo.get_group_members(str(group.uuid))
+    assert members[test_data.first_user] == GroupRole.MEMBER_READ_ONLY
+    assert members[test_data.second_user] == GroupRole.MEMBER
+
+
+async def test_remove_users_from_group(
+    test_data: CaseData
+):
+    group = await test_add_users_to_group(test_data)
+    await test_data.repo.remove_users_from_group(
+        str(group.uuid),
+        [str(test_data.first_user.uuid), str(test_data.second_user.uuid)]
+    )
+
+    members = await test_data.repo.get_group_members(str(group.uuid))
+    assert test_data.first_user not in members
+    assert test_data.second_user not in members
+
 
 async def test_get_group_members(test_data: CaseData):
     group = await test_data.repo.create_group(

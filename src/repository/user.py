@@ -1,3 +1,4 @@
+from typing import Sequence
 from uuid import UUID
 
 from sqlalchemy import delete, select
@@ -46,4 +47,9 @@ class UserRepository:
             )
 
         return
+
+    async def get_all_users(self) -> Sequence[User]:
+        async with self._session.begin():
+            result = await self._session.execute(select(User))
+            return result.scalars().all()
 

@@ -1,3 +1,6 @@
+from typing import Sequence
+from typing import cast
+from sqlalchemy.sql.schema import Column
 from uuid import UUID
 from models.group import GroupRole
 from typing import Mapping
@@ -11,6 +14,14 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 
 class GroupDeleteException(Exception):
     pass
+
+
+class GroupMembersRoleChangeException(Exception):
+    pass
+
+
+class GroupMembersRemoveException(Exception):
+    pass 
 
 
 class GroupRepository:
@@ -77,6 +88,44 @@ class GroupRepository:
             )
 
         await self._session.commit()
+
+    async def change_users_permissions(
+        self,
+        group_uuid: str,
+        user_uuid_to_role: Mapping[str, GroupRole]
+    ):
+        for user_uuid, role in user_uuid_to_role.items():
+            result = await self._session.execute(
+                select(GroupToUser).where(
+                    (GroupToUser.group_uuid == group_uuid) & 
+                        (GroupToUser.user_uuid == user_uuid)
+                )
+            )
+            group_to_user: GroupToUser | None = result.scalar_one_or_none()
+            if group_to_user is None:
+                await self._session.rollback()
+                raise GroupMembersRoleChangeException(f"Could not find the existing role for {user_uuid=} {group_uuid=}")
+
+            group_to_user.role = cast(Column, role)
+
+        await self._session.commit()
+
+
+    async def remove_users_from_group(
+        self, group_uuid: str, user_uuids: Sequence[str]
+    ):
+        result = await self._session.execute(
+            delete(GroupToUser).where(
+                (GroupToUser.group_uuid == UUID(group_uuid)) &
+                    (GroupToUser.user_uuid.in_(user_uuids))
+            )
+        )
+        if result.rowcount != len(user_uuids):
+            await self._session.rollback()
+            raise GroupMembersRemoveException(f"Member users count is less than argument: {len(user_uuids)=} {result.rowcount=}")
+
+        await self._session.commit()
+
 
     async def create_group(
         self,
